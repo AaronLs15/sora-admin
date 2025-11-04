@@ -257,11 +257,11 @@ export default function TerrenoForm() {
   }, [isEditing, editId]);
 
   // ===== Imagenes helpers (UI mejorada) =====
-  function reorder(next: Imagen[]) {
-    // normaliza orden incremental
-    const sorted = next.map((img, idx) => ({ ...img, orden: idx }));
-    setImgs(sorted);
-  }
+  // function reorder(next: Imagen[]) {
+  //   // normaliza orden incremental
+  //   const sorted = next.map((img, idx) => ({ ...img, orden: idx }));
+  //   setImgs(sorted);
+  // }
   function moveImage(index: number, dir: -1 | 1) {
     setImgs((prev) => {
       const next = prev.slice().sort((a, b) => a.orden - b.orden);
