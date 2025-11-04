@@ -1,73 +1,142 @@
-# React + TypeScript + Vite
+⸻
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+# 🏡 Sora Admin
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**Sora Admin** es el panel administrativo del ecosistema **Sora Company**, diseñado para gestionar terrenos, casas y leads de clientes interesados.  
+Construido con **React + Vite + TailwindCSS**, ofrece una interfaz rápida, moderna y adaptable a cualquier dispositivo.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Características principales
 
-## Expanding the ESLint configuration
+- **Gestión de propiedades**
+  - Alta, edición y eliminación de *terrenos* y *casas*.
+  - Carga de imágenes mediante `Uploader`.
+  - Vista previa tipo *card* con estilo minimalista.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Panel de Leads**
+  - Visualización de mensajes recibidos desde la página pública.
+  - Botones para contactar rápidamente por **WhatsApp** o **Correo electrónico**.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **Dashboard principal**
+  - Métricas de terrenos, casas y leads.
+  - Gráficas con *Chart.js* para estadísticas diarias o mensuales.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Sistema de roles**
+  - Administrador y Editor (definidos manualmente en base de datos).
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- **Diseño responsive**
+  - Compatible con escritorio, tablet y móvil.
+  - Paleta de colores adaptada al tema claro/oscuro.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🧱 Estructura del proyecto
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+sora-admin/
+│
+├── public/
+│   ├── favicon.svg
+│   └── _redirects          # Redirección SPA para Netlify
+│
+├── src/
+│   ├── components/         # Componentes reutilizables (Cards, Uploader, Inputs, etc.)
+│   ├── pages/              # Páginas principales: Login, Dashboard, Terrenos, Casas, Leads
+│   ├── lib/                # Configuraciones (ej. supabase client)
+│   ├── hooks/              # Hooks personalizados (ej. useMobile, useStats)
+│   ├── styles/             # Archivos de estilos o temas globales
+│   ├── App.tsx             # Definición de rutas y layout principal
+│   └── main.tsx            # Punto de entrada, renderiza la app
+│
+├── package.json            # Dependencias y scripts del proyecto
+├── tsconfig.app.json       # Configuración TypeScript
+├── tailwind.config.js      # Configuración de TailwindCSS
+├── vite.config.ts          # Configuración de Vite
+└── netlify.toml            # Configuración de despliegue (opcional)
+
+---
+
+## ⚙️ Tecnologías utilizadas
+
+| Tecnología       | Uso principal                                  |
+|------------------|------------------------------------------------|
+| **React 18+**    | Framework base                                 |
+| **Vite**         | Empaquetador ultrarrápido                      |
+| **TypeScript**   | Tipado estático y seguridad en desarrollo      |
+| **TailwindCSS**  | Estilos utilitarios y diseño responsive        |
+| **Supabase**     | Base de datos y almacenamiento de imágenes     |
+| **Chart.js**     | Visualización de estadísticas                  |
+| **Lucide React** | Iconos minimalistas                            |
+| **Netlify**      | Hosting y CI/CD                                |
+
+---
+
+## 🧰 Scripts disponibles
+
+En la raíz del proyecto:
+
+| Comando | Descripción |
+|----------|-------------|
+| `npm install` | Instala las dependencias |
+| `npm run dev` | Inicia el servidor de desarrollo en `http://localhost:5173` |
+| `npm run build` | Genera la versión optimizada de producción |
+| `npm run preview` | Previsualiza el build localmente |
+
+---
+
+## 🧑‍💻 Desarrollo local
+
+1. Clona el repositorio:
+```bash
+git clone https://github.com/AaronLs15/sora-admin.git
+cd sora-admin
+
+	2.	Instala las dependencias:
+
+npm install
+
+
+	3.	Ejecuta el entorno de desarrollo:
+
+npm run dev
+
+
+	4.	Abre en tu navegador:
+
+http://localhost:5173
+
+
+
+⸻
+
+📂 Estructura lógica del panel
+
+Módulo	Descripción
+Dashboard	Muestra las métricas globales (terrenos, casas, leads).
+Terrenos / Casas	CRUD completo, vista previa con imágenes y datos.
+Leads	Contactos recibidos desde la web pública, con acciones rápidas.
+Auth	Página de login (validación con Supabase).
+
+
+⸻
+
+🧩 Próximas mejoras (roadmap)
+	•	📦 Paginación y filtros avanzados en tablas.
+	•	🌙 Mejoras en tema oscuro y componentes visuales.
+
+⸻
+
+📝 Licencia
+
+Este proyecto está bajo la licencia MIT.
+Puedes usarlo y modificarlo libremente con atribución.
+
+⸻
+
+Desarrollado por Aaron Lujano￼ 💻
+Proyecto parte del ecosistema Sora Company.
+
+---
+
+¿Quieres que te genere también el **README** para el proyecto público (la web de Sora Company) con su estructura y explicación? Así ambos repositorios quedarían documentados de forma consistente.
