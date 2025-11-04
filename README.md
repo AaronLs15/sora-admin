@@ -136,7 +136,3 @@ Puedes usarlo y modificarlo libremente con atribución.
 
 Desarrollado por Aaron Lujano￼ 💻
 Proyecto parte del ecosistema Sora Company.
-
----
-
-¿Quieres que te genere también el **README** para el proyecto público (la web de Sora Company) con su estructura y explicación? Así ambos repositorios quedarían documentados de forma consistente.
