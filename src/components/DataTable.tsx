@@ -117,35 +117,35 @@ export function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className="bg-white border shadow-sm rounded-3xl border-slate-200">
+    <div className="overflow-hidden border shadow-sm bg-card rounded-3xl border-border">
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between bg-muted/30">
         <div className="space-y-1">
-          {title && <h2 className="text-base font-semibold text-slate-900">{title}</h2>}
-          <p className="text-xs text-slate-500">
+          {title && <h2 className="text-lg font-semibold tracking-tight text-foreground">{title}</h2>}
+          <p className="text-xs font-medium text-muted-foreground">
             {isLoading ? 'Cargando…' : `${sorted.length} resultados`}
           </p>
         </div>
 
-        <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <div className="relative">
+        <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <div className="relative group">
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={searchPlaceholder}
-              className="w-full px-3 py-2 text-sm border shadow-sm outline-none rounded-xl border-slate-200 bg-white/90 text-slate-700 ring-0 placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 sm:w-64"
+              className="w-full px-4 py-2 text-sm transition-all border outline-none shadow-xs rounded-xl border-input bg-background/50 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/10 sm:w-64 group-hover:bg-background"
             />
-            <span className="absolute text-xs -translate-y-1/2 pointer-events-none right-2 top-1/2 text-slate-400">
+            <span className="absolute text-xs font-medium -translate-y-1/2 pointer-events-none right-3 top-1/2 text-muted-foreground/50">
               ⌘K
             </span>
           </div>
 
-          <label className="inline-flex items-center gap-2 text-xs text-slate-600">
+          <label className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             Mostrar
             <select
               value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
-              className="px-2 py-1 text-xs bg-white border rounded-lg border-slate-200"
+              className="px-2 py-1.5 text-xs font-medium border rounded-lg border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/10"
             >
               {pageSizeOptions.map((n) => (
                 <option key={n} value={n}>
@@ -162,7 +162,7 @@ export function DataTable<T extends Record<string, any>>({
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm border-separate border-spacing-0">
           <thead>
-            <tr className="text-left text-slate-600">
+            <tr className="text-left border-b border-border/50">
               {columns.map((c, idx) => {
                 const isSorted = sort?.idx === idx;
                 const dir = isSorted ? sort?.dir : null;
@@ -171,28 +171,28 @@ export function DataTable<T extends Record<string, any>>({
                     key={idx}
                     onClick={() => toggleSort(idx)}
                     className={clsx(
-                      'sticky top-0 z-10 bg-white/95 px-4 py-3 text-xs font-semibold uppercase tracking-wide',
+                      'sticky top-0 z-10 bg-muted/50 backdrop-blur-sm px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground border-b border-border',
                       c.headerClassName,
                       c.hideBelow === 'sm' && 'hidden sm:table-cell',
                       c.hideBelow === 'md' && 'hidden md:table-cell',
                       c.hideBelow === 'lg' && 'hidden lg:table-cell',
                       c.hideBelow === 'xl' && 'hidden xl:table-cell',
-                      c.sortable && 'cursor-pointer select-none'
+                      c.sortable && 'cursor-pointer select-none hover:text-foreground hover:bg-muted/80 transition-colors'
                     )}
                     style={c.width ? { width: c.width } : undefined}
                   >
                     <div
                       className={clsx(
-                        'flex items-center gap-1',
+                        'flex items-center gap-2',
                         (c.align === 'right' && 'justify-end') ||
-                          (c.align === 'center' && 'justify-center') ||
-                          'justify-start'
+                        (c.align === 'center' && 'justify-center') ||
+                        'justify-start'
                       )}
                     >
                       <span>{c.header}</span>
                       {c.sortable && (
-                        <span className="text-slate-400">
-                          {dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '▵'}
+                        <span className={clsx("text-[10px]", isSorted ? "text-primary" : "text-muted-foreground/30")}>
+                          {dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '▲▼'}
                         </span>
                       )}
                     </div>
@@ -202,10 +202,10 @@ export function DataTable<T extends Record<string, any>>({
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="divide-y divide-border/40 bg-card">
             {error && (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-6 text-sm text-center text-red-600">
+                <td colSpan={columns.length} className="px-6 py-8 text-sm font-medium text-center text-destructive bg-destructive/5">
                   {error}
                 </td>
               </tr>
@@ -214,19 +214,19 @@ export function DataTable<T extends Record<string, any>>({
             {isLoading &&
               !error &&
               Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
-                <tr key={`sk-${i}`} className="border-t border-slate-100">
+                <tr key={`sk-${i}`}>
                   {columns.map((c, j) => (
                     <td
                       key={j}
                       className={clsx(
-                        'px-4 py-3',
+                        'px-6 py-4',
                         c.hideBelow === 'sm' && 'hidden sm:table-cell',
                         c.hideBelow === 'md' && 'hidden md:table-cell',
                         c.hideBelow === 'lg' && 'hidden lg:table-cell',
                         c.hideBelow === 'xl' && 'hidden xl:table-cell'
                       )}
                     >
-                      <div className="w-full h-4 rounded animate-pulse bg-slate-100"></div>
+                      <div className="w-full h-5 rounded-md animate-pulse bg-muted"></div>
                     </td>
                   ))}
                 </tr>
@@ -234,8 +234,15 @@ export function DataTable<T extends Record<string, any>>({
 
             {!isLoading && !error && paged.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="px-4 py-10 text-center text-slate-500">
-                  {emptyHint}
+                <td colSpan={columns.length} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <div className="p-3 rounded-full bg-muted/50">
+                      <svg className="w-6 h-6 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium">{emptyHint}</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -245,21 +252,21 @@ export function DataTable<T extends Record<string, any>>({
               paged.map((row) => (
                 <tr
                   key={String(row[keyField] ?? Math.random())}
-                  className="border-t border-slate-100 hover:bg-slate-50/60"
+                  className="transition-colors group hover:bg-muted/30"
                 >
                   {columns.map((c, idx) => (
                     <td
                       key={idx}
                       className={clsx(
-                        'px-4 py-3 text-slate-700',
+                        'px-6 py-4 text-sm text-foreground/80 group-hover:text-foreground transition-colors',
                         c.className,
                         c.hideBelow === 'sm' && 'hidden sm:table-cell',
                         c.hideBelow === 'md' && 'hidden md:table-cell',
                         c.hideBelow === 'lg' && 'hidden lg:table-cell',
                         c.hideBelow === 'xl' && 'hidden xl:table-cell',
                         (c.align === 'right' && 'text-right') ||
-                          (c.align === 'center' && 'text-center') ||
-                          ''
+                        (c.align === 'center' && 'text-center') ||
+                        ''
                       )}
                     >
                       {c.cell ? c.cell(row) : String(row[c.accessor as keyof T] ?? '—')}
@@ -272,21 +279,21 @@ export function DataTable<T extends Record<string, any>>({
       </div>
 
       {/* Paginación */}
-      <div className="flex items-center justify-between gap-3 p-4 text-xs border-t border-slate-100 text-slate-600">
+      <div className="flex items-center justify-between gap-4 p-4 text-xs font-medium border-t border-border bg-muted/10 text-muted-foreground">
         <span>
-          Página {currentPage} de {totalPages}
+          Página <span className="text-foreground">{currentPage}</span> de <span className="text-foreground">{totalPages}</span>
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40"
+            className="px-3 py-1.5 transition-colors border rounded-lg border-input hover:bg-background hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
             disabled={currentPage <= 1}
           >
             Anterior
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40"
+            className="px-3 py-1.5 transition-colors border rounded-lg border-input hover:bg-background hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
             disabled={currentPage >= totalPages}
           >
             Siguiente

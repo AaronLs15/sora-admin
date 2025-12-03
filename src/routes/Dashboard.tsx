@@ -263,96 +263,73 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500/80">Panel general</p>
-        <h1 className="text-3xl font-semibold text-slate-500/70">Monitoreo rápido</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-bold tracking-widest uppercase text-primary/60">Panel general</p>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Monitoreo rápido</h1>
+        <p className="text-sm text-muted-foreground">
           Revisa el desempeño de la web y la actividad de clientes en tiempo real.
         </p>
       </header>
 
       {error && (
-        <div className="px-5 py-4 text-sm font-medium text-red-700 border dark:text-red-200 rounded-xl border-red-300/60 dark:border-red-500/40 bg-red-50 dark:bg-red-950/60">
+        <div className="px-5 py-4 text-sm font-medium text-red-700 border rounded-xl border-red-200 bg-red-50 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50">
           {error}
         </div>
       )}
 
       {/* Gráfica de visitas */}
-      <section
-        className="
-          rounded-3xl bg-inherit
-          ring-1 ring-black/10 dark:ring-white/10
-          shadow-[0_1px_0_rgba(255,255,255,.6)_inset,0_10px_30px_rgba(0,0,0,.08)]
-          dark:shadow-[0_1px_0_rgba(255,255,255,.06)_inset,0_20px_40px_rgba(0,0,0,.5)]
-          p-4
-        "
-      >
+      <section className="p-6 border shadow-sm rounded-3xl bg-card border-border">
         {/* Period selector */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="inline-flex p-1 text-sm border rounded-2xl border-slate-200 bg-white/70 backdrop-blur dark:border-slate-700 dark:bg-slate-900/40">
-            <button
-              type="button"
-              onClick={() => setPeriod("week")}
-              className={`px-3 py-1.5 rounded-xl transition ${
-                period === "week" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "text-slate-700 dark:text-slate-200"
-              }`}
-            >
-              Semanal
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriod("month")}
-              className={`px-3 py-1.5 rounded-xl transition ${
-                period === "month" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "text-slate-700 dark:text-slate-200"
-              }`}
-            >
-              Mensual
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriod("year")}
-              className={`px-3 py-1.5 rounded-xl transition ${
-                period === "year" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900" : "text-slate-700 dark:text-slate-200"
-              }`}
-            >
-              Anual
-            </button>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-foreground">Visitas del sitio</h3>
+          <div className="inline-flex p-1 text-sm border rounded-xl border-border bg-muted/50">
+            {(["week", "month", "year"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPeriod(p)}
+                className={`px-3 py-1.5 rounded-lg transition-all text-xs font-medium ${period === p
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  }`}
+              >
+                {p === "week" ? "Semana" : p === "month" ? "Mes" : "Año"}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="h-64 md:h-72">
+        <div className="h-64 md:h-80 w-full">
           <canvas ref={canvasRef} />
         </div>
       </section>
 
       {/* Tarjetas de métricas */}
-      <section
-        className="
-          rounded-3xl bg-inherit
-          ring-1 ring-white/10
-          shadow-[0_1px_0_rgba(255,255,255,.6)_inset,0_10px_30px_rgba(0,0,0,.08)]
-          dark:shadow-[0_1px_0_rgba(255,255,255,.06)_inset,0_20px_40px_rgba(0,0,0,.5)]
-          overflow-hidden
-        "
-      >
-        <div className="grid grid-cols-1 divide-y md:grid-cols-3 md:divide-y-0 md:divide-x divide-black/10 dark:divide-white/10">
-          {metrics.map(({ key, label, description }) => {
-            const value = stats?.[key];
-            const formatted = typeof value === "number" ? value.toLocaleString("es-MX") : "—";
-            return (
-              <div key={key} className="p-6 sm:p-8">
-                <p className="text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">
-                  {stats ? "Actualizado" : "Sincronizando"}
-                </p>
-
-                <div className="mt-3">
-                  <h3 className="text-sm font-medium text-slate-500/80">{label}</h3>
-                  <p className="mt-2 text-4xl font-semibold text-slate-500">{formatted}</p>
-                  <p className="mt-2 text-sm text-slate-500">{description}</p>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {metrics.map(({ key, label, description }) => {
+          const value = stats?.[key];
+          const formatted = typeof value === "number" ? value.toLocaleString("es-MX") : "—";
+          return (
+            <div key={key} className="p-6 transition-all border shadow-sm rounded-3xl bg-card border-border hover:shadow-md hover:border-primary/20 group">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover:text-primary/70 transition-colors">
+                    {stats ? "Actualizado" : "Sincronizando"}
+                  </p>
+                  <h3 className="mt-2 text-sm font-medium text-muted-foreground">{label}</h3>
+                </div>
+                <div className="p-2 rounded-lg bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors">
+                  {/* Icon placeholder if needed */}
+                  <div className="w-4 h-4 rounded-full bg-current opacity-20" />
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              <div className="mt-4">
+                <p className="text-4xl font-bold tracking-tight text-foreground">{formatted}</p>
+                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{description}</p>
+              </div>
+            </div>
+          );
+        })}
       </section>
     </div>
   );

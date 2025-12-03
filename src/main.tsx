@@ -79,24 +79,28 @@ function Layout() {
       >
         {({ effective, resolved, toggleTheme }) => (
           <SidebarProvider>
-            
+
             <AppSidebar />
             <SidebarInset className="mx-auto">
-              
-              {/* Header en todo el layout */}
-              <header className="flex items-center h-12 gap-2 px-3 border-b bg-background/60 backdrop-blur">
-                <SidebarTrigger />
-                <Link to="/" className="font-semibold">
-                  Sora ByR
-                </Link>
 
-                
+              {/* Header en todo el layout */}
+              <header className="sticky top-0 z-10 flex items-center h-16 gap-4 px-4 border-b  shrink-0 md:px-6">
+                <SidebarTrigger className="-ml-2" />
+                <div className="flex items-center gap-2 mr-auto">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+                    <span className="text-lg font-bold">S</span>
+                  </div>
+                  <Link to="/" className="text-lg font-semibold tracking-tight">
+                    Saro ByR
+                  </Link>
+                </div>
 
                 {/* Botón que dispara el toggle del PRIMITIVE GLOBAL */}
                 <button
                   data-slot="theme-toggler-button"
                   className={cn(
-                    buttonVariants({ variant: "default", size: "default" })
+                    buttonVariants({ variant: "ghost", size: "default" }),
+                    "rounded-full hover:bg-muted transition-colors"
                   )}
                   onClick={() =>
                     toggleTheme(getNextTheme(effective, ["light", "dark"]))
@@ -108,10 +112,8 @@ function Layout() {
               </header>
 
               {/* Contenido de rutas */}
-              <main className="p-2 mx-auto ">
-                
-                  <Outlet />
-                
+              <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+                <Outlet />
               </main>
             </SidebarInset>
           </SidebarProvider>
