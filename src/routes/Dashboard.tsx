@@ -2,11 +2,20 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import { Chart } from "chart.js";
 import "chart.js/auto";
+import { Users, MousePointerClick, Globe } from "lucide-react";
 
 type Stats = {
   terrenos: number;
   casas: number;
   leads: number;
+};
+
+type PageView = {
+  created_at: string;
+  path: string | null;
+  referrer: string | null;
+  ua: string | null;
+  anonymous_id: string | null;
 };
 
 type MetricConfig = {
@@ -18,16 +27,17 @@ type MetricConfig = {
 
 type Period = "week" | "month" | "year";
 
+// --- Date Helpers ---
+
 function startOfDay(d: Date) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
 function startOfWeek(d: Date) {
-  // Semana inicia Lunes (MX). getDay(): 0=Dom...6=Sab
   const x = startOfDay(d);
-  const dow = x.getDay(); // 0..6
-  const offset = (dow + 6) % 7; // Lunes=0
+  const dow = x.getDay();
+  const offset = (dow + 6) % 7;
   x.setDate(x.getDate() - offset);
   return x;
 }
@@ -42,10 +52,8 @@ function startOfYear(d: Date) {
   return x;
 }
 
-// Genera los buckets (fechas clave) para cada periodo
 function buildBuckets(period: Period) {
   if (period === "week") {
-    // 12 semanas (incluyendo la actual)
     const buckets: Date[] = [];
     const today = startOfWeek(new Date());
     for (let i = 11; i >= 0; i--) {
@@ -56,7 +64,6 @@ function buildBuckets(period: Period) {
     return buckets;
   }
   if (period === "month") {
-    // 12 meses (incluyendo el actual)
     const buckets: Date[] = [];
     const today = startOfMonth(new Date());
     for (let i = 11; i >= 0; i--) {
@@ -66,7 +73,6 @@ function buildBuckets(period: Period) {
     }
     return buckets;
   }
-  // year: 5 años (incluyendo el actual)
   const buckets: Date[] = [];
   const today = startOfYear(new Date());
   for (let i = 4; i >= 0; i--) {
@@ -79,14 +85,11 @@ function buildBuckets(period: Period) {
 
 function bucketLabel(d: Date, period: Period, locale = "es-MX") {
   if (period === "week") {
-    // Etiquetamos con el inicio de la semana (p.ej. "03 nov")
     return d.toLocaleDateString(locale, { month: "short", day: "2-digit" });
   }
   if (period === "month") {
-    // "nov 2025"
     return d.toLocaleDateString(locale, { year: "numeric", month: "short" });
   }
-  // year
   return d.getFullYear().toString();
 }
 
@@ -100,27 +103,51 @@ function sameBucket(a: Date, b: Date, period: Period) {
   return a.getFullYear() === b.getFullYear();
 }
 
+// --- Device Detection Helper ---
+function getDeviceType(ua: string | null): "Mobile" | "Tablet" | "Desktop" {
+  if (!ua) return "Desktop";
+  const lower = ua.toLowerCase();
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(lower)) {
+    return "Tablet";
+  }
+  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)os|Opera M(obi|ini)/.test(ua)) {
+    return "Mobile";
+  }
+  return "Desktop";
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<Period>("week"); // "week" | "month" | "year"
-  const [series, setSeries] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
+  const [period, setPeriod] = useState<Period>("week");
 
-  // refs para Chart.js
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const chartRef = useRef<Chart | null>(null);
+  // Data states
+  const [visitsSeries, setVisitsSeries] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
+  const [totalVisits, setTotalVisits] = useState(0);
+  const [uniqueVisitors, setUniqueVisitors] = useState(0);
+  const [topPages, setTopPages] = useState<{ path: string; count: number }[]>([]);
+  const [topReferrers, setTopReferrers] = useState<{ referrer: string; count: number }[]>([]);
+  const [deviceStats, setDeviceStats] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
 
-  // Cargar métricas de tarjetas
+  // Refs for charts
+  const visitsChartRef = useRef<HTMLCanvasElement | null>(null);
+  const pagesChartRef = useRef<HTMLCanvasElement | null>(null);
+  const devicesChartRef = useRef<HTMLCanvasElement | null>(null);
+
+  const chartInstances = useRef<{ [key: string]: Chart | null }>({
+    visits: null,
+    pages: null,
+    devices: null
+  });
+
+  // 1. Load basic stats (cards)
   useEffect(() => {
     let cancelled = false;
-
     async function loadStats() {
-      setError(null);
-
       const [
-        { count: terrenos, error: terrenosErr },
-        { count: casas, error: casasErr },
-        { count: leads, error: leadsErr },
+        { count: terrenos },
+        { count: casas },
+        { count: leads },
       ] = await Promise.all([
         supabase.from("terrenos").select("*", { count: "exact", head: true }).eq("estado", "publicado"),
         supabase.from("casas").select("*", { count: "exact", head: true }).eq("estado", "publicado"),
@@ -128,209 +155,311 @@ export default function Dashboard() {
       ]);
 
       if (cancelled) return;
-
-      if (terrenosErr || casasErr || leadsErr) {
-        setError("No pudimos cargar las métricas. Intenta refrescar la página.");
-        return;
-      }
-
       setStats({
         terrenos: terrenos ?? 0,
         casas: casas ?? 0,
         leads: leads ?? 0,
       });
     }
-
     loadStats();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // Cargar visitas y agregarlas por periodo
+  // 2. Load Page Views Data
   useEffect(() => {
     let cancelled = false;
 
     async function loadVisits() {
       setError(null);
-
       const buckets = buildBuckets(period);
       const earliest = buckets[0];
-      const startISO = new Date(earliest).toISOString(); // desde inicio del primer bucket
+      const startISO = new Date(earliest).toISOString();
 
       const { data, error: pvErr } = await supabase
         .from("page_views")
-        .select("created_at")
+        .select("created_at, path, referrer, ua, anonymous_id")
         .gte("created_at", startISO)
         .order("created_at", { ascending: true });
 
       if (cancelled) return;
 
       if (pvErr) {
-        setError("No pudimos cargar la gráfica de visitas.");
+        setError("No pudimos cargar los datos de visitas.");
         return;
       }
 
-      // Inicializa conteos por bucket
-      const counts = buckets.map(() => 0);
+      const rows = (data as PageView[]) ?? [];
 
-      (data ?? []).forEach((row: { created_at: string }) => {
+      // --- Process: Visits over time ---
+      const counts = buckets.map(() => 0);
+      rows.forEach((row) => {
         const d = new Date(row.created_at);
-        // Encuentra el bucket al que pertenece
         const idx = buckets.findIndex((b) => sameBucket(d, b, period));
-        if (idx >= 0) counts[idx] += 1;
+        if (idx >= 0) {
+          counts[idx] += 1;
+        }
       });
 
-      setSeries({
+      setVisitsSeries({
         labels: buckets.map((b) => bucketLabel(b, period)),
         data: counts,
+      });
+
+      // --- Process: Total & Unique ---
+      setTotalVisits(rows.length);
+      const uniqueIds = new Set(rows.map(r => r.anonymous_id).filter(Boolean));
+      setUniqueVisitors(uniqueIds.size);
+
+      // --- Process: Top Pages ---
+      const pageMap = new Map<string, number>();
+      rows.forEach(r => {
+        const p = r.path || "/";
+        pageMap.set(p, (pageMap.get(p) || 0) + 1);
+      });
+      const sortedPages = Array.from(pageMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([path, count]) => ({ path, count }));
+      setTopPages(sortedPages);
+
+      // --- Process: Top Referrers ---
+      const refMap = new Map<string, number>();
+      rows.forEach(r => {
+        let ref = r.referrer;
+        if (!ref || ref.includes(window.location.host)) return; // Filter internal or empty
+        try {
+          const url = new URL(ref);
+          ref = url.hostname;
+        } catch { /* ignore */ }
+        refMap.set(ref, (refMap.get(ref) || 0) + 1);
+      });
+      const sortedRefs = Array.from(refMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([referrer, count]) => ({ referrer, count }));
+      setTopReferrers(sortedRefs);
+
+      // --- Process: Device Stats ---
+      const deviceMap = { Desktop: 0, Mobile: 0, Tablet: 0 };
+      rows.forEach(r => {
+        const type = getDeviceType(r.ua);
+        deviceMap[type]++;
+      });
+      setDeviceStats({
+        labels: Object.keys(deviceMap),
+        data: Object.values(deviceMap),
       });
     }
 
     loadVisits();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [period]);
 
-  // Renderizar/actualizar Chart.js
+  // 3. Render Charts
   useEffect(() => {
-    if (!canvasRef.current) return;
+    // --- Visits Chart (Line) ---
+    if (visitsChartRef.current) {
+      chartInstances.current.visits?.destroy();
+      const ctx = visitsChartRef.current.getContext("2d");
+      if (ctx) {
+        const stroke = "rgba(79, 70, 229, 1)"; // Indigo 600
+        const fill = "rgba(79, 70, 229, 0.1)";
 
-    chartRef.current?.destroy();
-    chartRef.current = null;
-
-    const ctx = canvasRef.current.getContext("2d");
-    if (!ctx) return;
-
-    // Color neutro (slate ~600) con relleno sutil para diferenciar del fondo
-    const stroke = "rgba(71,85,105,1)";   // #475569
-    const fill = "rgba(71,85,105,0.15)";
-
-    const periodLabel =
-      period === "week" ? "últimas 12 semanas" : period === "month" ? "últimos 12 meses" : "últimos 5 años";
-
-    chartRef.current = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: series.labels,
-        datasets: [
-          {
-            label: `Visitas (${periodLabel})`,
-            data: series.data,
-            borderColor: stroke,
-            backgroundColor: fill,
-            borderWidth: 2.5,
-            pointRadius: 2,
-            pointBackgroundColor: stroke,
-            pointBorderColor: stroke,
-            fill: true,
-            tension: 0.25,
+        chartInstances.current.visits = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: visitsSeries.labels,
+            datasets: [{
+              label: "Visitas",
+              data: visitsSeries.data,
+              borderColor: stroke,
+              backgroundColor: fill,
+              borderWidth: 2,
+              pointRadius: 3,
+              fill: true,
+              tension: 0.3,
+            }],
           },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: true },
-          tooltip: { enabled: true },
-        },
-        scales: {
-          x: { ticks: { autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
-          y: { beginAtZero: true, ticks: { precision: 0 } },
-        },
-      },
-    });
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true, ticks: { precision: 0 } },
+            },
+          },
+        });
+      }
+    }
+
+    // --- Top Pages Chart (Bar) ---
+    if (pagesChartRef.current) {
+      chartInstances.current.pages?.destroy();
+      const ctx = pagesChartRef.current.getContext("2d");
+      if (ctx) {
+        chartInstances.current.pages = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: topPages.map(p => p.path),
+            datasets: [{
+              label: "Vistas",
+              data: topPages.map(p => p.count),
+              backgroundColor: "rgba(16, 185, 129, 0.7)", // Emerald 500
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, ticks: { precision: 0 } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+      }
+    }
+
+    // --- Devices Chart (Doughnut) ---
+    if (devicesChartRef.current) {
+      chartInstances.current.devices?.destroy();
+      const ctx = devicesChartRef.current.getContext("2d");
+      if (ctx) {
+        chartInstances.current.devices = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: deviceStats.labels,
+            datasets: [{
+              data: deviceStats.data,
+              backgroundColor: [
+                "rgba(59, 130, 246, 0.7)", // Blue 500
+                "rgba(249, 115, 22, 0.7)", // Orange 500
+                "rgba(168, 85, 247, 0.7)", // Purple 500
+              ],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'right' }
+            },
+            cutout: '70%',
+          },
+        });
+      }
+    }
 
     return () => {
-      chartRef.current?.destroy();
-      chartRef.current = null;
+      Object.values(chartInstances.current).forEach(c => c?.destroy());
     };
-  }, [series, period]);
+  }, [visitsSeries, topPages, deviceStats]);
 
-  // Config de las 3 métricas
-  const metrics: MetricConfig[] = useMemo(
-    () => [
-      { key: "terrenos", label: "Terrenos publicados", description: "Inventario visible en el portal Saro." },
-      { key: "casas", label: "Casas publicadas", description: "Propiedades disponibles para clientes." },
-      { key: "leads", label: "Leads recibidos", description: "Solicitudes nuevas pendientes de seguimiento." },
-    ],
-    []
-  );
+  const metrics: MetricConfig[] = useMemo(() => [
+    { key: "terrenos", label: "Terrenos", description: "Publicados", icon: <Globe className="w-4 h-4" /> },
+    { key: "casas", label: "Casas", description: "Publicadas", icon: <Globe className="w-4 h-4" /> },
+    { key: "leads", label: "Leads", description: "Recibidos", icon: <Users className="w-4 h-4" /> },
+  ], []);
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-2">
-        <p className="text-xs font-bold tracking-widest uppercase text-primary/60">Panel general</p>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Monitoreo rápido</h1>
-        <p className="text-sm text-muted-foreground">
-          Revisa el desempeño de la web y la actividad de clientes en tiempo real.
-        </p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Resumen de actividad y rendimiento.</p>
+        </div>
+
+        {/* Period Selector */}
+        <div className="inline-flex p-1 text-sm border rounded-xl border-border bg-muted/50 self-start md:self-auto">
+          {(["week", "month", "year"] as const).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              className={`px-3 py-1.5 rounded-lg transition-all text-xs font-medium ${period === p
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                }`}
+            >
+              {p === "week" ? "Semana" : p === "month" ? "Mes" : "Año"}
+            </button>
+          ))}
+        </div>
       </header>
 
       {error && (
-        <div className="px-5 py-4 text-sm font-medium text-red-700 border rounded-xl border-red-200 bg-red-50 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/50">
+        <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50">
           {error}
         </div>
       )}
 
-      {/* Gráfica de visitas */}
-      <section className="p-6 border shadow-sm rounded-3xl bg-card border-border">
-        {/* Period selector */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-foreground">Visitas del sitio</h3>
-          <div className="inline-flex p-1 text-sm border rounded-xl border-border bg-muted/50">
-            {(["week", "month", "year"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 rounded-lg transition-all text-xs font-medium ${period === p
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-                  }`}
-              >
-                {p === "week" ? "Semana" : p === "month" ? "Mes" : "Año"}
-              </button>
+      {/* Main Stats Grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Custom Cards for Visits */}
+        <div className="p-6 border shadow-sm rounded-3xl bg-card border-border">
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <MousePointerClick className="w-4 h-4" />
+            <span className="text-sm font-medium">Visitas Totales</span>
+          </div>
+          <p className="text-3xl font-bold text-foreground">{totalVisits.toLocaleString()}</p>
+        </div>
+
+        {/* Database Metrics */}
+        {metrics.map(({ key, label, description, icon }) => (
+          <div key={key} className="p-6 border shadow-sm rounded-3xl bg-card border-border">
+            <div className="flex items-center gap-2 text-muted-foreground mb-2">
+              {icon}
+              <span className="text-sm font-medium">{label}</span>
+            </div>
+            <p className="text-3xl font-bold text-foreground">
+              {stats ? stats[key].toLocaleString() : "—"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Line Chart */}
+        <section className="lg:col-span-2 p-6 border shadow-sm rounded-3xl bg-card border-border">
+          <h3 className="text-lg font-semibold mb-6">Tendencia de Visitas</h3>
+          <div className="h-72 w-full">
+            <canvas ref={visitsChartRef} />
+          </div>
+        </section>
+
+        {/* Device Stats */}
+        <section className="p-6 border shadow-sm rounded-3xl bg-card border-border flex flex-col">
+          <h3 className="text-lg font-semibold mb-6">Dispositivos</h3>
+          <div className="flex-1 min-h-[200px] relative">
+            <canvas ref={devicesChartRef} />
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
+            {deviceStats.labels.map((label, i) => (
+              <div key={label}>
+                <span className="block font-bold text-foreground">{deviceStats.data[i]}</span>
+                {label}
+              </div>
             ))}
           </div>
-        </div>
+        </section>
+      </div>
 
-        <div className="h-64 md:h-80 w-full">
-          <canvas ref={canvasRef} />
-        </div>
-      </section>
-
-      {/* Tarjetas de métricas */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {metrics.map(({ key, label, description }) => {
-          const value = stats?.[key];
-          const formatted = typeof value === "number" ? value.toLocaleString("es-MX") : "—";
-          return (
-            <div key={key} className="p-6 transition-all border shadow-sm rounded-3xl bg-card border-border hover:shadow-md hover:border-primary/20 group">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-bold tracking-widest uppercase text-muted-foreground group-hover:text-primary/70 transition-colors">
-                    {stats ? "Actualizado" : "Sincronizando"}
-                  </p>
-                  <h3 className="mt-2 text-sm font-medium text-muted-foreground">{label}</h3>
-                </div>
-                <div className="p-2 rounded-lg bg-primary/5 text-primary group-hover:bg-primary/10 transition-colors">
-                  {/* Icon placeholder if needed */}
-                  <div className="w-4 h-4 rounded-full bg-current opacity-20" />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <p className="text-4xl font-bold tracking-tight text-foreground">{formatted}</p>
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-2">{description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
+      {/* Bottom Section: Top Pages & Referrers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Pages */}
+        <section className="p-6 border shadow-sm rounded-3xl bg-card border-border">
+          <h3 className="text-lg font-semibold mb-6">Páginas Más Visitadas</h3>
+          <div className="h-64 w-full">
+            <canvas ref={pagesChartRef} />
+          </div>
+        </section>
+      </div>
     </div>
   );
 }
+
