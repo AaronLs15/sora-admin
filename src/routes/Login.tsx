@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 import '../index.css'
 
 export default function Login() {
   const [errorMsg, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -16,12 +18,13 @@ export default function Login() {
     const password = String(fd.get('password'))
 
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    setError(error ? 'Credenciales inválidas. Revisa tu correo y contraseña.' : null)
 
-    if (!error) {
-      location.href = '/'
-    } else {
+    if (error) {
+      setError('Credenciales inválidas. Revisa tu correo y contraseña.')
       setIsLoading(false)
+    } else {
+      // Successful login
+      navigate('/', { replace: true })
     }
   }
 
