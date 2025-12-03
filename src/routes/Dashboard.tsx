@@ -124,9 +124,7 @@ export default function Dashboard() {
   // Data states
   const [visitsSeries, setVisitsSeries] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
   const [totalVisits, setTotalVisits] = useState(0);
-  const [uniqueVisitors, setUniqueVisitors] = useState(0);
   const [topPages, setTopPages] = useState<{ path: string; count: number }[]>([]);
-  const [topReferrers, setTopReferrers] = useState<{ referrer: string; count: number }[]>([]);
   const [deviceStats, setDeviceStats] = useState<{ labels: string[]; data: number[] }>({ labels: [], data: [] });
 
   // Refs for charts
@@ -207,8 +205,6 @@ export default function Dashboard() {
 
       // --- Process: Total & Unique ---
       setTotalVisits(rows.length);
-      const uniqueIds = new Set(rows.map(r => r.anonymous_id).filter(Boolean));
-      setUniqueVisitors(uniqueIds.size);
 
       // --- Process: Top Pages ---
       const pageMap = new Map<string, number>();
@@ -233,11 +229,6 @@ export default function Dashboard() {
         } catch { /* ignore */ }
         refMap.set(ref, (refMap.get(ref) || 0) + 1);
       });
-      const sortedRefs = Array.from(refMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([referrer, count]) => ({ referrer, count }));
-      setTopReferrers(sortedRefs);
 
       // --- Process: Device Stats ---
       const deviceMap = { Desktop: 0, Mobile: 0, Tablet: 0 };
