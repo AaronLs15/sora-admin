@@ -51,7 +51,7 @@ function buildWhatsAppText(lead: LeadRow) {
   const nombre = lead.nombre?.trim() || "¡Hola!";
   const tipo = lead.tipo ? ` sobre "${lead.tipo}"` : "";
   const origen = lead.origen_slug ? ` (ref: ${lead.origen_slug})` : "";
-  return `Hola ${nombre}, te contacto de Sora ByR${tipo}${origen}. ¿Podemos continuar por aquí?`;
+  return `Hola ${nombre}, te contacto de Saro ByR${tipo}${origen}. ¿Podemos continuar por aquí?`;
 }
 
 function buildWhatsAppHref(lead?: LeadRow | null): string | null {
@@ -73,7 +73,7 @@ function buildMailtoHref(lead?: LeadRow | null): string | null {
     `Gracias por contactarnos${lead.tipo ? ` por "${lead.tipo}"` : ""}. ` +
     `${lead.origen_slug ? `Referencia: ${lead.origen_slug}. ` : ""}` +
     `¿Podrías contarnos un poco más para apoyarte mejor?%0D%0A%0D%0A` +
-    `Saludos,%0D%0AEquipo Sora ByR`;
+    `Saludos,%0D%0AEquipo Saro ByR`;
   return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${body}`;
 }
 
@@ -131,22 +131,20 @@ function LeadMobileItem({
                 target="_blank"
                 rel="noreferrer"
                 aria-disabled={!waHref}
-                className={`inline-flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
-                  waHref
+                className={`inline-flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-medium transition ${waHref
                     ? "border-green-500 text-white bg-linear-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-emerald-300"
                     : "pointer-events-none border-slate-300 text-slate-400 bg-slate-100"
-                }`}
+                  }`}
               >
                 WhatsApp
               </a>
               <a
                 href={mailHref || "#"}
                 aria-disabled={!mailHref}
-                className={`inline-flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
-                  mailHref
+                className={`inline-flex items-center justify-center rounded-xl border px-3 py-1.5 text-xs font-medium transition ${mailHref
                     ? "border-sky-500 text-white bg-linear-to-r from-sky-500 to-cyan-400 hover:from-sky-400 hover:to-cyan-300"
                     : "pointer-events-none border-slate-300 text-slate-400 bg-slate-100"
-                }`}
+                  }`}
               >
                 Email
               </a>
@@ -293,10 +291,9 @@ export default function Leads() {
             rel="noreferrer"
             aria-disabled={!waHref}
             className={`inline-flex flex-1 items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold shadow-lg transition md:flex-none
-              ${
-                waHref
-                  ? "border-green-500 bg-linear-to-r from-green-500 to-emerald-400 text-white shadow-emerald-500/30 hover:from-green-400 hover:to-emerald-300"
-                  : "pointer-events-none border-slate-400/40 bg-white/10 text-white/60 opacity-60"
+              ${waHref
+                ? "border-green-500 bg-linear-to-r from-green-500 to-emerald-400 text-white shadow-emerald-500/30 hover:from-green-400 hover:to-emerald-300"
+                : "pointer-events-none border-slate-400/40 bg-white/10 text-white/60 opacity-60"
               }`}
             title={waHref ? "Enviar WhatsApp" : "Selecciona un lead con teléfono válido"}
           >
@@ -307,10 +304,9 @@ export default function Leads() {
             href={mailHref || "#"}
             aria-disabled={!mailHref}
             className={`inline-flex flex-1 items-center justify-center rounded-2xl border px-4 py-2 text-sm font-semibold shadow-lg transition md:flex-none
-              ${
-                mailHref
-                  ? "border-sky-500 bg-linear-to-r from-sky-500 to-cyan-400 text-white shadow-cyan-500/30 hover:from-sky-400 hover:to-cyan-300"
-                  : "pointer-events-none border-slate-400/40 bg-white/10 text-white/60 opacity-60"
+              ${mailHref
+                ? "border-sky-500 bg-linear-to-r from-sky-500 to-cyan-400 text-white shadow-cyan-500/30 hover:from-sky-400 hover:to-cyan-300"
+                : "pointer-events-none border-slate-400/40 bg-white/10 text-white/60 opacity-60"
               }`}
             title={mailHref ? "Mandar Email" : "Selecciona un lead con email válido"}
           >

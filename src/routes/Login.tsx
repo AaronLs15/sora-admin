@@ -34,7 +34,7 @@ export default function Login() {
         <div className="p-8 space-y-8 border shadow-2xl rounded-3xl border-slate-800 bg-slate-900/65 shadow-slate-950/40 backdrop-blur sm:p-10">
           <header className="space-y-3 text-center text-slate-100">
             <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
-              Panel Sora
+              Panel Saro ByR
             </p>
             <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">Bienvenido de regreso</h1>
             <p className="text-sm text-slate-400">
@@ -93,7 +93,7 @@ export default function Login() {
           </form>
 
           <footer className="text-xs text-center text-slate-500">
-            © {new Date().getFullYear()} Sora • Seguridad empresarial de grado profesional
+            © {new Date().getFullYear()} Saro • Seguridad empresarial de grado profesional
           </footer>
         </div>
       </div>

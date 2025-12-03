@@ -104,10 +104,10 @@ export default function TerrenoForm() {
     const link_maps = link_maps_raw
       ? link_maps_raw
       : direccion_corta
-      ? `https://www.google.com/maps/search/${encodeURIComponent(
+        ? `https://www.google.com/maps/search/${encodeURIComponent(
           direccion_corta
         )}`
-      : "#";
+        : "#";
 
     const lat = Number(fd.get("lat") || 0);
     const lng = Number(fd.get("lng") || 0);
@@ -229,8 +229,8 @@ export default function TerrenoForm() {
           terreno.link_maps ??
           (terreno.direccion_corta
             ? `https://www.google.com/maps/search/${encodeURIComponent(
-                terreno.direccion_corta
-              )}`
+              terreno.direccion_corta
+            )}`
             : "#"),
         precio_cents: toNumber(terreno.precio_cents ?? 0),
         moneda: terreno.moneda ?? "MXN",
@@ -421,7 +421,7 @@ export default function TerrenoForm() {
           <p className="text-sm text-slate-300">
             {isEditing
               ? "Actualiza la información de la propiedad."
-              : "Captura información clara y completa para destacar la propiedad dentro del catálogo digital de Sora."}
+              : "Captura información clara y completa para destacar la propiedad dentro del catálogo digital de Saro."}
           </p>
         </div>
         <dl className="grid grid-cols-2 gap-3 text-sm text-slate-300 sm:grid-cols-3 md:w-auto">
@@ -432,7 +432,7 @@ export default function TerrenoForm() {
             <dd className="mt-1 text-lg font-semibold text-white">
               {defaults?.estado
                 ? defaults.estado.charAt(0).toUpperCase() +
-                  defaults.estado.slice(1)
+                defaults.estado.slice(1)
                 : "Borrador"}
             </dd>
           </div>
@@ -836,11 +836,10 @@ export default function TerrenoForm() {
                             {/* Barra superior: Portada + orden + controles de reorden */}
                             <div className="absolute top-0 left-0 flex items-center justify-between w-full p-2">
                               <span
-                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                  idx === 0
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${idx === 0
                                     ? "bg-amber-500/90 text-white"
                                     : "bg-white/90 text-slate-700"
-                                }`}
+                                  }`}
                               >
                                 {idx === 0 ? "Portada" : `#${idx + 1}`}
                               </span>
@@ -912,8 +911,8 @@ export default function TerrenoForm() {
                     {isSubmitting
                       ? "Guardando…"
                       : isEditing
-                      ? "Guardar cambios"
-                      : "Guardar terreno"}
+                        ? "Guardar cambios"
+                        : "Guardar terreno"}
                   </button>
                 </div>
               </div>

@@ -253,7 +253,7 @@ export default function Dashboard() {
   // Config de las 3 métricas
   const metrics: MetricConfig[] = useMemo(
     () => [
-      { key: "terrenos", label: "Terrenos publicados", description: "Inventario visible en el portal Sora." },
+      { key: "terrenos", label: "Terrenos publicados", description: "Inventario visible en el portal Saro." },
       { key: "casas", label: "Casas publicadas", description: "Propiedades disponibles para clientes." },
       { key: "leads", label: "Leads recibidos", description: "Solicitudes nuevas pendientes de seguimiento." },
     ],
@@ -288,8 +288,8 @@ export default function Dashboard() {
                 type="button"
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1.5 rounded-lg transition-all text-xs font-medium ${period === p
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
                   }`}
               >
                 {p === "week" ? "Semana" : p === "month" ? "Mes" : "Año"}
