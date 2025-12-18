@@ -84,6 +84,19 @@ export default function TerrenoForm() {
       .filter(Boolean);
   }
 
+  // Valida y limita lat/lng a rangos geográficos válidos
+  function parseCoord(
+    value: FormDataEntryValue | null,
+    min: number,
+    max: number
+  ): number | null {
+    if (value === null || value === "") return null;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return null;
+    if (num < min || num > max) return null; // fuera de rango válido
+    return num;
+  }
+
   function etiquetasToInputValue(arr?: string[] | null) {
     return Array.isArray(arr) && arr.length ? arr.join(", ") : "";
   }
@@ -306,8 +319,8 @@ export default function TerrenoForm() {
       es_destacado: fd.get("es_destacado") === "on",
       descripcion: String(fd.get("descripcion") || "").trim(),
       link_maps: String(fd.get("link_maps") || "").trim() || null,
-      lat: Number(fd.get("lat") || 0) || null,
-      lng: Number(fd.get("lng") || 0) || null,
+      lat: parseCoord(fd.get("lat"), -90, 90),
+      lng: parseCoord(fd.get("lng"), -180, 180),
       etiquetas: parseEtiquetas(fd.get("etiquetas")),
       servicios: {
         agua: fd.get("servicios.agua") === "on",
@@ -837,8 +850,8 @@ export default function TerrenoForm() {
                             <div className="absolute top-0 left-0 flex items-center justify-between w-full p-2">
                               <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-semibold ${idx === 0
-                                    ? "bg-amber-500/90 text-white"
-                                    : "bg-white/90 text-slate-700"
+                                  ? "bg-amber-500/90 text-white"
+                                  : "bg-white/90 text-slate-700"
                                   }`}
                               >
                                 {idx === 0 ? "Portada" : `#${idx + 1}`}
