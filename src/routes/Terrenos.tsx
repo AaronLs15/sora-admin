@@ -108,7 +108,16 @@ function EstadoBadge({ estado, destacado }: { estado: EstadoPropiedad; destacado
 }
 
 // --- Mobile Card item ---
-function TerrenoMobileItem({ r }: { r: TerrenoRow }) {
+function TerrenoMobileItem({
+  r,
+  onDelete,
+  deleting,
+}: {
+  r: TerrenoRow;
+  onDelete: (id: string | number, titulo: string) => void;
+  deleting: string | number | null;
+}) {
+  const isDeleting = deleting === r.id;
   return (
     <li className="p-4 bg-white border shadow-sm rounded-2xl border-slate-200">
       <div className="flex items-start justify-between gap-3">
@@ -141,15 +150,23 @@ function TerrenoMobileItem({ r }: { r: TerrenoRow }) {
         >
           ✏️ Editar
         </a>
+        <button
+          onClick={() => onDelete(r.id, r.titulo)}
+          disabled={isDeleting}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-50"
+          title="Eliminar terreno"
+        >
+          {isDeleting ? "…" : "🗑️ Eliminar"}
+        </button>
         {r.link_maps && (
           <a
             href={r.link_maps}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-600 transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-600 transition hover:bg-slate-50"
             title="Abrir en Google Maps"
           >
-            🗺️ Mapa
+            🗺️
           </a>
         )}
       </div>
@@ -161,7 +178,31 @@ export default function Terrenos() {
   const [rows, setRows] = useState<TerrenoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | number | null>(null);
   const isSmall = useMediaQuery("(max-width: 767px)"); // Tailwind md breakpoint
+
+  async function handleDelete(id: string | number, titulo: string) {
+    const confirmed = window.confirm(
+      `¿Estás seguro de eliminar el terreno "${titulo}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(id);
+    try {
+      // Primero eliminamos las imágenes asociadas
+      await supabase.from("terreno_imagen").delete().eq("terreno_id", id);
+      // Luego el terreno
+      const { error: delError } = await supabase.from("terrenos").delete().eq("id", id);
+      if (delError) throw delError;
+      // Actualizamos la lista local
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al eliminar";
+      alert(msg);
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -262,31 +303,42 @@ export default function Terrenos() {
         width: "1%",
         align: "right",
         className: "whitespace-nowrap",
-        cell: (r) => (
-          <div className="flex items-center justify-end gap-2">
-            <a
-              href={`/terrenos/nuevo?id=${encodeURIComponent(String(r.id))}`}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-              title="Editar terreno"
-            >
-              ✏️ Editar
-            </a>
-            {r.link_maps && (
+        cell: (r) => {
+          const isDeleting = deleting === r.id;
+          return (
+            <div className="flex items-center justify-end gap-2">
               <a
-                href={r.link_maps}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-600 transition hover:bg-slate-50"
-                title="Abrir en Google Maps"
+                href={`/terrenos/nuevo?id=${encodeURIComponent(String(r.id))}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                title="Editar terreno"
               >
-                🗺️ Mapa
+                ✏️ Editar
               </a>
-            )}
-          </div>
-        ),
+              <button
+                onClick={() => handleDelete(r.id, r.titulo)}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700 shadow-sm transition hover:bg-rose-100 disabled:opacity-50"
+                title="Eliminar terreno"
+              >
+                {isDeleting ? "…" : "🗑️"}
+              </button>
+              {r.link_maps && (
+                <a
+                  href={r.link_maps}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-600 transition hover:bg-slate-50"
+                  title="Abrir en Google Maps"
+                >
+                  🗺️
+                </a>
+              )}
+            </div>
+          );
+        },
       },
     ],
-    []
+    [deleting, handleDelete]
   );
 
   return (
@@ -336,7 +388,12 @@ export default function Terrenos() {
           )}
           <ul className="grid grid-cols-1 gap-3">
             {rows.map((r) => (
-              <TerrenoMobileItem key={String(r.id)} r={r} />
+              <TerrenoMobileItem
+                key={String(r.id)}
+                r={r}
+                onDelete={handleDelete}
+                deleting={deleting}
+              />
             ))}
           </ul>
         </section>
