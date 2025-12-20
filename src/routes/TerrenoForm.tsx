@@ -18,6 +18,13 @@ function toNumber(v: unknown): number {
   return 0;
 }
 
+// Detecta si una URL es de video basándose en la extensión
+function isVideoUrl(url: string): boolean {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v', '.mkv'];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext));
+}
+
 export default function TerrenoForm() {
   // ===== URL param: id (modo edición si existe) =====
   const [searchParams] = useSearchParams();
@@ -309,7 +316,7 @@ export default function TerrenoForm() {
     const fd = new FormData(e.currentTarget);
 
     const payload: Record<string, unknown> = {
-      slug: String(fd.get("slug")).trim(),
+      slug: String(fd.get("slug")).trim().replace(/\s+/g, "_"),
       titulo: String(fd.get("titulo")).trim(),
       precio_cents: Number(fd.get("precio_cents") || 0),
       moneda: "MXN",
@@ -798,7 +805,7 @@ export default function TerrenoForm() {
                       Material visual
                     </h2>
                     <p className="text-sm text-slate-500">
-                      Sube imágenes (ideal 1600×900). Puedes reordenarlas,
+                      Sube imágenes o videos (ideal 1600×900). Puedes reordenarlas,
                       elegir portada y editar el texto alternativo.
                     </p>
                   </div>
@@ -840,11 +847,17 @@ export default function TerrenoForm() {
                           className="relative overflow-hidden border shadow-sm group rounded-3xl border-slate-200 bg-slate-50"
                         >
                           <div className="relative w-full overflow-hidden h-44">
-                            <img
-                              src={img.url}
-                              alt={`Imagen ${idx + 1}`}
-                              className="object-cover w-full h-full"
-                            />
+                            {isVideoUrl(img.url) ? (
+                              <video
+                                src={img.url}
+                                className="object-cover w-full h-full"
+                                controls
+                                muted
+                                playsInline
+                              />
+                            ) : (
+                              <img src={img.url} alt={`Imagen ${idx + 1}`} className="object-cover w-full h-full" />
+                            )}
 
                             {/* Barra superior: Portada + orden + controles de reorden */}
                             <div className="absolute top-0 left-0 flex items-center justify-between w-full p-2">

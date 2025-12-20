@@ -18,6 +18,13 @@ function toNumber(v: unknown): number {
   return 0;
 }
 
+// Detecta si una URL es de video basándose en la extensión
+function isVideoUrl(url: string): boolean {
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v', '.mkv'];
+  const lowerUrl = url.toLowerCase();
+  return videoExtensions.some(ext => lowerUrl.includes(ext));
+}
+
 export default function CasaForm() {
   // ===== URL param: id (edición si existe) =====
   const [searchParams] = useSearchParams();
@@ -122,8 +129,8 @@ export default function CasaForm() {
     const link_maps = link_maps_raw
       ? link_maps_raw
       : direccion_corta
-      ? `https://www.google.com/maps/search/${encodeURIComponent(direccion_corta)}`
-      : "#";
+        ? `https://www.google.com/maps/search/${encodeURIComponent(direccion_corta)}`
+        : "#";
 
     // Servicios checkboxes
     const servicios: Record<string, boolean> = { agua: false, luz: false, gas: false };
@@ -304,7 +311,7 @@ export default function CasaForm() {
     const fd = new FormData(e.currentTarget);
 
     const payload: Record<string, unknown> = {
-      slug: String(fd.get("slug")).trim(),
+      slug: String(fd.get("slug")).trim().replace(/\s+/g, "_"),
       titulo: String(fd.get("titulo")).trim(),
       precio_cents: Number(fd.get("precio_cents") || 0),
       moneda: "MXN",
@@ -724,7 +731,7 @@ export default function CasaForm() {
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">Material visual</h2>
                     <p className="text-sm text-slate-500">
-                      Sube imágenes (ideal 1600×900). Reordena, elige portada y elimina si es necesario.
+                      Sube imágenes o videos (ideal 1600×900). Reordena, elige portada y elimina si es necesario.
                     </p>
                   </div>
                   <span className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
@@ -756,14 +763,23 @@ export default function CasaForm() {
                           className="relative overflow-hidden border shadow-sm group rounded-3xl border-slate-200 bg-slate-50"
                         >
                           <div className="relative w-full overflow-hidden h-44">
-                            <img src={img.url} alt={`Imagen ${idx + 1}`} className="object-cover w-full h-full" />
+                            {isVideoUrl(img.url) ? (
+                              <video
+                                src={img.url}
+                                className="object-cover w-full h-full"
+                                controls
+                                muted
+                                playsInline
+                              />
+                            ) : (
+                              <img src={img.url} alt={`Imagen ${idx + 1}`} className="object-cover w-full h-full" />
+                            )}
 
                             {/* Barra superior */}
                             <div className="absolute top-0 left-0 flex items-center justify-between w-full p-2">
                               <span
-                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                  idx === 0 ? "bg-amber-500/90 text-white" : "bg-white/90 text-slate-700"
-                                }`}
+                                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${idx === 0 ? "bg-amber-500/90 text-white" : "bg-white/90 text-slate-700"
+                                  }`}
                               >
                                 {idx === 0 ? "Portada" : `#${idx + 1}`}
                               </span>
