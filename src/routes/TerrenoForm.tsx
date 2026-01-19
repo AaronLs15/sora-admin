@@ -544,7 +544,7 @@ export default function TerrenoForm() {
                       name="precio_cents"
                       type="number"
                       min={0}
-                      step={1000}
+                      step={100}
                       placeholder="Ej. 125000000"
                       className={baseInput}
                       defaultValue={defaults?.precio_cents ?? ""}
